@@ -1,12 +1,12 @@
 class AddRecordedRequests < ActiveRecord::Migration
   def self.up
-    create_table :recorded_requests do |t|
+    create_table :recorded_request_log do |t|
       t.text "log"
       t.timestamp :created_at
     end
   end
 
   def self.down
-    drop_table :recorded_requests
+    drop_table :recorded_request_log
   end
 end

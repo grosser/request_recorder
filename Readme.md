@@ -4,6 +4,7 @@ Install
 =======
 
     gem install request_recorder
+    # generate a add_recorded_requests migration and paste content of MIGRATION
 
 Usage
 =====

@@ -7,7 +7,7 @@ describe RequestRecorder do
     Car.first
     [200, {}, "assadasd"]
   } }
-  let(:existing_request){ RequestRecorder::Request.create(:log => "BEFORE") }
+  let(:existing_request){ RequestRecorder::Log.create(:log => "BEFORE") }
 
   before do
     ActiveRecord::Base.logger.instance_variable_set("@log", original_logger)
@@ -16,7 +16,7 @@ describe RequestRecorder do
   end
 
   after do
-    RequestRecorder::Request.delete_all
+    RequestRecorder::Log.delete_all
   end
 
   it "has a VERSION" do
@@ -26,7 +26,7 @@ describe RequestRecorder do
   it "records activerecord queries" do
     middleware = RequestRecorder::Middleware.new(inner_app)
     middleware.call(activate_logger)
-    RequestRecorder::Request.last.log.should include "SELECT"
+    RequestRecorder::Log.last.log.should include "SELECT"
   end
 
   it "blows up if you go over the maximum" do
@@ -40,7 +40,7 @@ describe RequestRecorder do
     it "sets cookie in first step" do
       middleware = RequestRecorder::Middleware.new(inner_app)
       status, headers, body = middleware.call(activate_logger)
-      generated = RequestRecorder::Request.last
+      generated = RequestRecorder::Log.last
       headers["Set-Cookie"].should include "__request_recording=9%3A#{generated.id}; path=/; expires="
     end
 
@@ -70,7 +70,7 @@ describe RequestRecorder do
     middleware.call(
       "QUERY_STRING" => "stuff=hello", "HTTP_COOKIE" => "bar=foo"
     )
-    RequestRecorder::Request.count.should == 0
+    RequestRecorder::Log.count.should == 0
   end
 
   it "restores the AR logger after executing" do
