@@ -52,6 +52,15 @@ describe RequestRecorder do
       existing_request.should include "BEFORE"
     end
 
+    it "creates a new log if redis dies" do
+      existing_request_id # store key
+      redis.flushall
+      middleware.call("HTTP_COOKIE" => "__request_recording=8:#{existing_request_id}")
+      existing_request = redis.hget(redis_key, existing_request_id)
+      existing_request.should include "SELECT"
+      existing_request.should_not include "BEFORE"
+    end
+
     it "decrements cookie on each step" do
       status, headers, body = middleware.call("HTTP_COOKIE" => "__request_recording=2:#{existing_request_id};foo=bar")
       headers["Set-Cookie"].should include "__request_recording=1%3A#{existing_request_id}; expires="

@@ -6,10 +6,10 @@ module RequestRecorder
       @redis = redis
     end
 
-    def write(id, s)
-      old = (id ? @redis.hget(KEY, id) : "") #TODO test-case for to_s
+    def write(id, text)
+      old = (id ? @redis.hget(KEY, id) : "")
       id = "#{Time.now.to_i}_#{Process.pid}" unless id
-      @redis.hset(KEY, id, old + s)
+      @redis.hset(KEY, id, old.to_s + text)
       id
     end
   end
