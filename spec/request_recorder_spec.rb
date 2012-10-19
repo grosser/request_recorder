@@ -31,6 +31,11 @@ describe RequestRecorder do
     stored.values.last.should include "SELECT"
   end
 
+  it "starts with a given key" do
+    middleware.call({"QUERY_STRING" => "__request_recording=10|abcdefg"})
+    redis.hget(redis_key, "abcdefg").should include "SELECT"
+  end
+
   it "blows up if you go over the maximum" do
     status, headers, body = middleware.call("QUERY_STRING" => "__request_recording=99999")
     status.should == 500

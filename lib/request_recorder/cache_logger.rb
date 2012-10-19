@@ -7,8 +7,9 @@ module RequestRecorder
     end
 
     def write(id, text)
-      id = "#{KEY}.#{Time.now.utc.strftime("%Y-%m-%d %H:%M:%S.%L")}_#{Process.pid}" unless id
-      @store.write(id, @store.read(id).to_s + text)
+      id = "#{Time.now.utc.strftime("%Y-%m-%d %H:%M:%S.%L")}_#{Process.pid}" unless id
+      key = "#{KEY}.#{id}"
+      @store.write(key, @store.read(key).to_s + text)
       id
     end
   end

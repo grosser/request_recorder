@@ -16,6 +16,7 @@ describe RequestRecorder::CacheLogger do
   end
 
   let(:store){ Store.new }
+  let(:key){ RequestRecorder::CacheLogger::KEY }
   let(:logger){ RequestRecorder::CacheLogger.new(store) }
 
   context "#write" do
@@ -31,13 +32,13 @@ describe RequestRecorder::CacheLogger do
 
     it "creates a new entry" do
       logger.write("1111", "X")
-      store.read("1111").should == "X"
+      store.read("#{key}.1111").should == "X"
     end
 
     it "appends to an existing key" do
       logger.write("1111", "X")
       logger.write("1111", "X")
-      store.read("1111").should == "XX"
+      store.read("#{key}.1111").should == "XX"
     end
   end
 end
