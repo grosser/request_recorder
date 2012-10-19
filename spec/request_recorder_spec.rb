@@ -41,12 +41,12 @@ describe RequestRecorder do
     it "sets cookie in first step" do
       status, headers, body = middleware.call(activate_logger)
       generated_id = stored.keys.last
-      headers["Set-Cookie"].should include "__request_recording=9%3A#{generated_id}; expires="
+      headers["Set-Cookie"].should include "__request_recording=9%7C#{generated_id.gsub(":", "%3A").gsub(" ", "+")}; expires="
       headers["Set-Cookie"].should include "; HttpOnly"
     end
 
     it "appends to existing log" do
-      middleware.call("HTTP_COOKIE" => "__request_recording=8:#{existing_request_id}")
+      middleware.call("HTTP_COOKIE" => "__request_recording=8|#{existing_request_id}")
       existing_request = redis.hget(redis_key, existing_request_id)
       existing_request.should include "SELECT"
       existing_request.should include "BEFORE"
@@ -55,19 +55,19 @@ describe RequestRecorder do
     it "creates a new log if redis dies" do
       existing_request_id # store key
       redis.flushall
-      middleware.call("HTTP_COOKIE" => "__request_recording=8:#{existing_request_id}")
+      middleware.call("HTTP_COOKIE" => "__request_recording=8|#{existing_request_id}")
       existing_request = redis.hget(redis_key, existing_request_id)
       existing_request.should include "SELECT"
       existing_request.should_not include "BEFORE"
     end
 
     it "decrements cookie on each step" do
-      status, headers, body = middleware.call("HTTP_COOKIE" => "__request_recording=2:#{existing_request_id};foo=bar")
-      headers["Set-Cookie"].should include "__request_recording=1%3A#{existing_request_id}; expires="
+      status, headers, body = middleware.call("HTTP_COOKIE" => "__request_recording=2|#{existing_request_id};foo=bar")
+      headers["Set-Cookie"].should include "__request_recording=1%7C#{existing_request_id}; expires="
     end
 
     it "removes cookie if final step is reached" do
-      status, headers, body = middleware.call("HTTP_COOKIE" => "__request_recording=1:#{existing_request_id};foo=bar")
+      status, headers, body = middleware.call("HTTP_COOKIE" => "__request_recording=1|#{existing_request_id};foo=bar")
       headers["Set-Cookie"].should include "__request_recording=; expires="
     end
   end

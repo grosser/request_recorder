@@ -8,7 +8,7 @@ module RequestRecorder
 
     def write(id, text)
       old = (id ? @redis.hget(KEY, id) : "")
-      id = "#{Time.now.to_i}_#{Process.pid}" unless id
+      id = "#{Time.now.utc.strftime("%Y-%m-%d %H:%M:%S")}_#{Process.pid}" unless id
       @redis.hset(KEY, id, old.to_s + text)
       id
     end

@@ -6,6 +6,7 @@ module RequestRecorder
   class Middleware
     MARKER = "__request_recording"
     MAX_STEPS = 100
+    SEPARATOR = "|"
 
     def initialize(app, options={})
       @app = app
@@ -39,7 +40,7 @@ module RequestRecorder
     def read_state_from_env(env)
       request = Rack::Request.new(env)
       if request.cookies[MARKER]
-        steps, id = request.cookies[MARKER].split(":")
+        steps, id = request.cookies[MARKER].split(SEPARATOR)
         [steps.to_i, id]
       else
         [env["QUERY_STRING"][/#{MARKER}=(\d+)/, 1].to_i, nil]
@@ -52,7 +53,7 @@ module RequestRecorder
       if to_go <= 1
         response.delete_cookie(MARKER)
       else
-        response.set_cookie(MARKER, {:value => "#{to_go.to_i - 1}:#{id}", :expires => Time.now+24*60*60, :httponly => true})
+        response.set_cookie(MARKER, {:value => "#{to_go.to_i - 1}#{SEPARATOR}#{id}", :expires => Time.now+24*60*60, :httponly => true})
       end
 
       response.finish # finish writes out the response in the expected format.
