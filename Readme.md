@@ -4,20 +4,22 @@ Install
 =======
 
     gem install request_recorder
-    rails generate migration add_recorded_requests
-    # copy content of MIGRATION
-    rake db:migrate
 
 Add to your middleware stack:
 
-    use RequestRecorder::Middleware
+    require "request_recorder"
+    use RequestRecorder::Middleware, :store => RequestRecorder::RedisLogger.new(Redis.new)
+
+### No Redis, No problem
+If you do not have redis, you can write your own logger, you only need a .write method,
+see [RedisLogger](https://github.com/grosser/request_recorder/blob/master/lib/request_recorder/redis_logger.rb)
 
 Usage
 =====
 
  - request a page with `/something?__request_recording=10` -> record next 10 requests from my browser
- - RequestRecorded::Requests gets a new entry with all the logging info from rails + activerecord
- - go to the database or build a nice frontend for RequestRecorded::Requests
+ - redis 'request_recorder' gets a new entry with all the logging info from rails + activerecord
+ - go to redis or build a nice frontend
 
 Author
 ======

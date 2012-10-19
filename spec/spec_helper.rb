@@ -1,5 +1,8 @@
 require "request_recorder"
 
+require "active_record"
+require "fakeredis"
+
 ActiveRecord::Base.logger = ActiveSupport::BufferedLogger.new("/dev/null")
 
 # connect
@@ -11,9 +14,6 @@ ActiveRecord::Base.establish_connection(
 # create tables
 ActiveRecord::Schema.verbose = false
 ActiveRecord::Schema.define(:version => 1) do
-  eval(File.read(File.expand_path("../../MIGRATION", __FILE__)))
-  AddRecordedRequests.up
-
   create_table :cars do |t|
     t.timestamps
   end

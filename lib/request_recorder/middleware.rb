@@ -1,7 +1,6 @@
 require "stringio"
 require "rack/request"
 require "rack/response"
-require "request_recorder/log"
 
 module RequestRecorder
   class Middleware
@@ -10,6 +9,7 @@ module RequestRecorder
 
     def initialize(app, options={})
       @app = app
+      @store = options.fetch(:store)
     end
 
     def call(env)
@@ -33,10 +33,7 @@ module RequestRecorder
     private
 
     def persist_log(id, log)
-      record = (id ? Log.find(id) : Log.new(:log => ""))
-      record.log += log + "\n\n"
-      record.save!
-      record.id
+      @store.write(id, log)
     end
 
     def read_state_from_env(env)

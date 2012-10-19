@@ -9,6 +9,5 @@ Gem::Specification.new name, RequestRecorder::VERSION do |s|
   s.homepage = "http://github.com/grosser/#{name}"
   s.files = `git ls-files`.split("\n")
   s.license = "MIT"
-  s.add_dependency "activerecord", "2.3.14"
   s.add_dependency "rack"
 end
