@@ -1,6 +1,7 @@
 require "active_record"
 
 ActiveRecord::Base.logger = ActiveSupport::BufferedLogger.new("/dev/null")
+ActiveRecord::Schema.verbose = false
 
 # connect
 ActiveRecord::Base.establish_connection(
