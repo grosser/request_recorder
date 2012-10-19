@@ -1,3 +1,4 @@
+require "active_record"
 require "request_recorder/version"
 require "rack/request"
 require "rack/response"

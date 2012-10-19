@@ -1,27 +1,3 @@
-require "active_record"
-
-ActiveRecord::Base.logger = ActiveSupport::BufferedLogger.new("/dev/null")
-ActiveRecord::Schema.verbose = false
-
-# connect
-ActiveRecord::Base.establish_connection(
-  :adapter => "sqlite3",
-  :database => ":memory:"
-)
-
-# create tables
-ActiveRecord::Schema.define(:version => 1) do
-  eval(File.read(File.expand_path("../../MIGRATION", __FILE__)))
-  AddRecordedRequests.up
-
-  create_table :cars do |t|
-    t.timestamps
-  end
-end
-
-class Car < ActiveRecord::Base
-end
-
 require "spec_helper"
 
 describe RequestRecorder do
@@ -60,7 +36,7 @@ describe RequestRecorder do
     body.should include "maximum"
   end
 
-  context "cookie persistence" do
+  context "subsequent requests" do
     it "sets cookie in first step" do
       middleware = RequestRecorder::Middleware.new(inner_app)
       status, headers, body = middleware.call(activate_logger)
