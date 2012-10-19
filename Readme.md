@@ -8,11 +8,14 @@ Install
 Add to your middleware stack:
 
     require "request_recorder"
-    use RequestRecorder::Middleware, :store => RequestRecorder::RedisLogger.new(Redis.new)
 
-### No Redis, No problem
-If you do not have redis, you can write your own logger, you only need a .write method,
-see [RedisLogger](https://github.com/grosser/request_recorder/blob/master/lib/request_recorder/redis_logger.rb)
+    require "request_recorder/cache_logger"
+    use RequestRecorder::Middleware, :store => RequestRecorder::CacheLogger.new(Rails.cache)
+
+    -- or --
+
+    require "request_recorder/redis_logger"
+    use RequestRecorder::Middleware, :store => RequestRecorder::RedisLogger.new(Redis.new)
 
 Usage
 =====

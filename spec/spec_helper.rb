@@ -1,4 +1,6 @@
 require "request_recorder"
+require "request_recorder/redis_logger"
+require "request_recorder/cache_logger"
 
 require "active_record"
 require "fakeredis"
