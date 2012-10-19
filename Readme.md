@@ -6,6 +6,7 @@ Install
     gem install request_recorder
     rails generate migration add_recorded_requests
     # copy content of MIGRATION
+    rake db:migrate
 
 Add to your middleware stack:
 

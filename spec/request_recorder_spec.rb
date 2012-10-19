@@ -41,7 +41,8 @@ describe RequestRecorder do
       middleware = RequestRecorder::Middleware.new(inner_app)
       status, headers, body = middleware.call(activate_logger)
       generated = RequestRecorder::Log.last
-      headers["Set-Cookie"].should include "__request_recording=9%3A#{generated.id}; path=/; expires="
+      headers["Set-Cookie"].should include "__request_recording=9%3A#{generated.id}; expires="
+      headers["Set-Cookie"].should include "; HttpOnly"
     end
 
     it "appends to existing log" do
@@ -55,7 +56,7 @@ describe RequestRecorder do
     it "decrements cookie on each step" do
       middleware = RequestRecorder::Middleware.new(inner_app)
       status, headers, body = middleware.call("HTTP_COOKIE" => "__request_recording=2:#{existing_request.id};foo=bar")
-      headers["Set-Cookie"].should include "__request_recording=1%3A#{existing_request.id}; path=/; expires="
+      headers["Set-Cookie"].should include "__request_recording=1%3A#{existing_request.id}; expires="
     end
 
     it "removes cookie if final step is reached" do
@@ -80,5 +81,13 @@ describe RequestRecorder do
     ActiveRecord::Base.logger.instance_variable_get("@log").object_id.should == original_logger.object_id
     ActiveRecord::Base.logger.auto_flushing.should == 1000
     ActiveRecord::Base.logger.level.should == Logger::ERROR
+  end
+
+  it "fails with a nice message if logging_to_recorded blows up" do
+    middleware = RequestRecorder::Middleware.new(inner_app)
+    StringIO.should_receive(:new).and_raise("Oooops")
+    expect{
+      middleware.call(activate_logger)
+    }.to raise_error "Oooops"
   end
 end
