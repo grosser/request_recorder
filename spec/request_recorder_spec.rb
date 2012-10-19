@@ -10,7 +10,7 @@ describe RequestRecorder do
   let(:middleware){ RequestRecorder::Middleware.new(inner_app, :store => RequestRecorder::RedisLogger.new(redis)) }
   let(:redis){ FakeRedis::Redis.new }
   let(:redis_key){ RequestRecorder::RedisLogger::KEY }
-  let(:existing_request_id){ redis.hset(redis_key, "123456789", "BEFORE") ; "123456789"}
+  let(:existing_request_id){ redis.hset(redis_key, "123_456", "BEFORE") ; "123_456"}
 
   before do
     ActiveRecord::Base.logger.instance_variable_set("@log", original_logger)
@@ -92,6 +92,34 @@ describe RequestRecorder do
     expect{
       middleware.call(activate_logger)
     }.to raise_error "Oooops"
+  end
+
+  it "integrates" do
+    stored.size.should == 0
+
+    # request 1 - start + decrement + log
+    status, headers, body = middleware.call({"QUERY_STRING" => "__request_recording=3"})
+    stored.size.should == 1
+    stored.values.last.scan("SELECT").size.should == 1
+    cookie = headers["Set-Cookie"].split(";").first
+
+    # request 2 - decrement + log
+    status, headers, body = middleware.call({"HTTP_COOKIE" => cookie})
+    stored.size.should == 1
+    stored.values.last.scan("SELECT").size.should == 2
+    cookie = headers["Set-Cookie"].split(";").first
+
+    # request 3 - remove cookie + log
+    status, headers, body = middleware.call({"HTTP_COOKIE" => cookie})
+    stored.size.should == 1
+    stored.values.last.scan("SELECT").size.should == 3
+    cookie = headers["Set-Cookie"].split(";").first
+    cookie.should == "__request_recording="
+
+    # request 4 - no more logging
+    status, headers, body = middleware.call({})
+    stored.size.should == 1
+    stored.values.last.scan("SELECT").size.should == 3
   end
 
   private

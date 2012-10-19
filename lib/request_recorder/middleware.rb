@@ -39,7 +39,8 @@ module RequestRecorder
     def read_state_from_env(env)
       request = Rack::Request.new(env)
       if request.cookies[MARKER]
-        request.cookies[MARKER].split(":").map(&:to_i)
+        steps, id = request.cookies[MARKER].split(":")
+        [steps.to_i, id]
       else
         [env["QUERY_STRING"][/#{MARKER}=(\d+)/, 1].to_i, nil]
       end
