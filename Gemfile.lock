@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    request_recorder (0.0.7)
+    request_recorder (0.0.8)
       rack
 
 GEM
