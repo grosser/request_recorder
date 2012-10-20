@@ -1,6 +1,7 @@
 require "stringio"
 require "rack/request"
 require "rack/response"
+require "request_recorder/repeater"
 
 module RequestRecorder
   class Middleware
@@ -16,7 +17,7 @@ module RequestRecorder
     def call(env)
       # keep this part as fast as possible, since 99.99999% of requests will not need it
       return @app.call(env) unless (
-      (env["QUERY_STRING"] && env["QUERY_STRING"].include?(MARKER)) or
+        (env["QUERY_STRING"] && env["QUERY_STRING"].include?(MARKER)) or
         (env["HTTP_COOKIE"] && env["HTTP_COOKIE"].include?(MARKER))
       )
 
@@ -57,13 +58,16 @@ module RequestRecorder
     end
 
     def capture_logging
-      recorder = StringIO.new
       old = [
         ActiveRecord::Base.logger.instance_variable_get("@log"),
         ActiveRecord::Base.logger.auto_flushing,
         ActiveRecord::Base.logger.level
       ]
-      ActiveRecord::Base.logger.instance_variable_set("@log", recorder)
+
+      recorder = StringIO.new
+      repeater = Repeater.new([recorder, old[0]])
+
+      ActiveRecord::Base.logger.instance_variable_set("@log", repeater)
       ActiveRecord::Base.logger.auto_flushing = true
       ActiveRecord::Base.logger.level = Logger::DEBUG
       yield

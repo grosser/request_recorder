@@ -1,7 +1,7 @@
 require "spec_helper"
 
 describe RequestRecorder do
-  let(:original_logger){ ActiveSupport::BufferedLogger.new("/dev/null") }
+  let(:original_logger){ ActiveSupport::BufferedLogger.new("/dev/null").instance_variable_get("@log") }
   let(:activate_logger){ {"QUERY_STRING" => "__request_recording=10"} }
   let(:inner_app){ lambda{|env|
     Car.first
@@ -29,6 +29,13 @@ describe RequestRecorder do
   it "records activerecord queries" do
     middleware.call(activate_logger)
     stored.values.last.should include "SELECT"
+  end
+
+  it "still writes to the old log to keep us compliant with 'logging all requests'" do
+    recorder = StringIO.new
+    ActiveRecord::Base.logger.instance_variable_set("@log", recorder)
+    middleware.call(activate_logger)
+    recorder.string.should == stored.values.last
   end
 
   it "starts with a given key" do
