@@ -10,7 +10,7 @@ module RequestRecorder
       if id
         old = read(id)
       else
-        id = "#{Time.now.utc.strftime("%Y-%m-%d %H:%M:%S.%L")}_#{Process.pid}"
+        id = "#{Time.now.utc.strftime("%Y-%m-%d %H:%M:%S")}_#{rand(1000)}_#{Process.pid}"
       end
       @store.write(key(id), "#{old}#{text}")
       id

@@ -39,7 +39,6 @@ shared_examples "a logger" do
   context "#write" do
     it "returns a unique id" do
       old = logger.write(nil, "X")
-      sleep 0.01
       old.should_not == logger.write(nil, "X")
     end
 
