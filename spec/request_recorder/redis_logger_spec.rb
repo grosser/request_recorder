@@ -5,26 +5,16 @@ describe RequestRecorder::RedisLogger do
   let(:key){ RequestRecorder::RedisLogger::KEY }
   let(:logger){ RequestRecorder::RedisLogger.new(store) }
 
-  context "#write" do
-    it "returns a unique id" do
-      old = logger.write(nil, "X")
-      sleep 0.01
-      old.should_not == logger.write(nil, "X")
+  it_behaves_like "a logger"
+
+  context "#keys" do
+    it "lists the keys" do
+      logger.write("xxx", "X")
+      logger.keys.should == ["xxx"]
     end
 
-    it "returns existing ids" do
-      "1111".should == logger.write("1111", "X")
-    end
-
-    it "creates a new entry" do
-      logger.write("1111", "X")
-      store.hget(key, "1111").should == "X"
-    end
-
-    it "appends to an existing key" do
-      logger.write("1111", "X")
-      logger.write("1111", "X")
-      store.hget(key, "1111").should == "XX"
+    it "returns empty array for empty keys" do
+      logger.keys.should == []
     end
   end
 end

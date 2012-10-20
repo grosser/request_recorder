@@ -2,15 +2,26 @@ module RequestRecorder
   class RedisLogger
     KEY = "request_recorder"
 
-    def initialize(redis)
-      @redis = redis
+    def initialize(store)
+      @store = store
     end
 
     def write(id, text)
-      old = (id ? @redis.hget(KEY, id) : "")
-      id = "#{Time.now.utc.strftime("%Y-%m-%d %H:%M:%S.%L")}_#{Process.pid}" unless id
-      @redis.hset(KEY, id, old.to_s + text)
+      if id
+        old = read(id)
+      else
+        id = "#{Time.now.utc.strftime("%Y-%m-%d %H:%M:%S.%L")}_#{Process.pid}"
+      end
+      @store.hset(KEY, id, "#{old}#{text}")
       id
+    end
+
+    def read(id)
+      @store.hget(KEY, id)
+    end
+
+    def keys
+      @store.hkeys(KEY)
     end
   end
 end
