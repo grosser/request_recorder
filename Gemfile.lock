@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    request_recorder (0.0.8)
+    request_recorder (0.0.9)
       activerecord
       rack
 
