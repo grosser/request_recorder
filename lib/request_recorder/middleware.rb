@@ -2,12 +2,14 @@ require "stringio"
 require "rack/request"
 require "rack/response"
 require "request_recorder/repeater"
+require "active_record"
 
 module RequestRecorder
   class Middleware
     MARKER = "__request_recording"
     MAX_STEPS = 100
     SEPARATOR = "|"
+    NEED_AUTOFLUSH = (ActiveRecord::VERSION::MAJOR == 2)
 
     def initialize(app, options={})
       @app = app
@@ -60,7 +62,7 @@ module RequestRecorder
     def capture_logging
       old = [
         ActiveRecord::Base.logger.instance_variable_get("@log"),
-        ActiveRecord::Base.logger.auto_flushing,
+        (ActiveRecord::Base.logger.auto_flushing if NEED_AUTOFLUSH),
         ActiveRecord::Base.logger.level
       ]
 
@@ -68,14 +70,14 @@ module RequestRecorder
       repeater = Repeater.new([recorder, old[0]])
 
       ActiveRecord::Base.logger.instance_variable_set("@log", repeater)
-      ActiveRecord::Base.logger.auto_flushing = true
+      ActiveRecord::Base.logger.auto_flushing = true if NEED_AUTOFLUSH
       ActiveRecord::Base.logger.level = Logger::DEBUG
       yield
       recorder.string
     ensure
       if old
         ActiveRecord::Base.logger.instance_variable_set("@log", old[0])
-        ActiveRecord::Base.logger.auto_flushing = old[1]
+        ActiveRecord::Base.logger.auto_flushing = old[1] if NEED_AUTOFLUSH
         ActiveRecord::Base.logger.level = old[2]
       end
     end

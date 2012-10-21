@@ -14,7 +14,7 @@ describe RequestRecorder do
 
   before do
     ActiveRecord::Base.logger.instance_variable_set("@log", original_logger)
-    ActiveRecord::Base.logger.auto_flushing = 1000
+    ActiveRecord::Base.logger.auto_flushing = 1000 if RequestRecorder::Middleware::NEED_AUTOFLUSH
     ActiveRecord::Base.logger.level = Logger::ERROR
   end
 
@@ -32,10 +32,18 @@ describe RequestRecorder do
   end
 
   it "still writes to the old log to keep us compliant with 'logging all requests'" do
-    recorder = StringIO.new
-    ActiveRecord::Base.logger.instance_variable_set("@log", recorder)
-    middleware.call(activate_logger)
-    recorder.string.should == stored.values.last
+    if ActiveRecord::VERSION::MAJOR == 2
+      recorder = StringIO.new
+      ActiveRecord::Base.logger.instance_variable_set("@log", recorder)
+      middleware.call(activate_logger)
+      recorder.string.should == stored.values.last
+    else
+      Tempfile.open("xx") do |f|
+        ActiveRecord::Base.logger.instance_variable_set("@log", Logger.new(f.path))
+        middleware.call(activate_logger)
+        File.read(f.path).strip.should == stored.values.last.strip
+      end
+    end
   end
 
   it "starts with a given key" do
@@ -95,7 +103,7 @@ describe RequestRecorder do
     middleware.call(activate_logger)
 
     ActiveRecord::Base.logger.instance_variable_get("@log").object_id.should == original_logger.object_id
-    ActiveRecord::Base.logger.auto_flushing.should == 1000
+    ActiveRecord::Base.logger.auto_flushing.should == 1000 if RequestRecorder::Middleware::NEED_AUTOFLUSH
     ActiveRecord::Base.logger.level.should == Logger::ERROR
   end
 

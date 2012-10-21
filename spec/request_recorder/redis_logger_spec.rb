@@ -5,6 +5,12 @@ describe RequestRecorder::RedisLogger do
   let(:key){ RequestRecorder::RedisLogger::KEY }
   let(:logger){ RequestRecorder::RedisLogger.new(store) }
 
+  before do
+    # TODO this should not be necessary ...
+    # but BUNDLE_GEMFILE=gemfiles/rails2.gemfile rspec spec/ fails without
+    store.flushall
+  end
+
   it_behaves_like "a logger"
 
   context "#keys" do
