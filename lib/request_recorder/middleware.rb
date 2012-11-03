@@ -6,7 +6,7 @@ require "active_record"
 
 module RequestRecorder
   class Middleware
-    MARKER = "__request_recording"
+    MARKER = "request_recorder"
     MAX_STEPS = 100
     SEPARATOR = "|"
     NEED_AUTOFLUSH = (ActiveRecord::VERSION::MAJOR == 2)

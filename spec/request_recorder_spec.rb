@@ -2,7 +2,7 @@ require "spec_helper"
 
 describe RequestRecorder do
   let(:original_logger){ ActiveSupport::BufferedLogger.new("/dev/null").instance_variable_get("@log") }
-  let(:activate_logger){ {"QUERY_STRING" => "__request_recording=10"} }
+  let(:activate_logger){ {"QUERY_STRING" => "request_recorder=10"} }
   let(:inner_app){ lambda{|env|
     Car.first
     [200, {}, "assadasd"]
@@ -47,12 +47,12 @@ describe RequestRecorder do
   end
 
   it "starts with a given key" do
-    middleware.call({"QUERY_STRING" => "__request_recording=10|abcdefg"})
+    middleware.call({"QUERY_STRING" => "request_recorder=10|abcdefg"})
     redis.hget(redis_key, "abcdefg").should include "SELECT"
   end
 
   it "blows up if you go over the maximum" do
-    status, headers, body = middleware.call("QUERY_STRING" => "__request_recording=99999")
+    status, headers, body = middleware.call("QUERY_STRING" => "request_recorder=99999")
     status.should == 500
     body.should include "maximum"
   end
@@ -61,12 +61,12 @@ describe RequestRecorder do
     it "sets cookie in first step" do
       status, headers, body = middleware.call(activate_logger)
       generated_id = stored.keys.last
-      headers["Set-Cookie"].should include "__request_recording=9%7C#{generated_id.gsub(":", "%3A").gsub(" ", "+")}; expires="
+      headers["Set-Cookie"].should include "request_recorder=9%7C#{generated_id.gsub(":", "%3A").gsub(" ", "+")}; expires="
       headers["Set-Cookie"].should include "; HttpOnly"
     end
 
     it "appends to existing log" do
-      middleware.call("HTTP_COOKIE" => "__request_recording=8|#{existing_request_id}")
+      middleware.call("HTTP_COOKIE" => "request_recorder=8|#{existing_request_id}")
       existing_request = redis.hget(redis_key, existing_request_id)
       existing_request.should include "SELECT"
       existing_request.should include "BEFORE"
@@ -75,24 +75,24 @@ describe RequestRecorder do
     it "creates a new log if redis dies" do
       existing_request_id # store key
       redis.flushall
-      middleware.call("HTTP_COOKIE" => "__request_recording=8|#{existing_request_id}")
+      middleware.call("HTTP_COOKIE" => "request_recorder=8|#{existing_request_id}")
       existing_request = redis.hget(redis_key, existing_request_id)
       existing_request.should include "SELECT"
       existing_request.should_not include "BEFORE"
     end
 
     it "decrements cookie on each step" do
-      status, headers, body = middleware.call("HTTP_COOKIE" => "__request_recording=2|#{existing_request_id};foo=bar")
-      headers["Set-Cookie"].should include "__request_recording=1%7C#{existing_request_id}; expires="
+      status, headers, body = middleware.call("HTTP_COOKIE" => "request_recorder=2|#{existing_request_id};foo=bar")
+      headers["Set-Cookie"].should include "request_recorder=1%7C#{existing_request_id}; expires="
     end
 
     it "removes cookie if final step is reached" do
-      status, headers, body = middleware.call("HTTP_COOKIE" => "__request_recording=1|#{existing_request_id};foo=bar")
-      headers["Set-Cookie"].should include "__request_recording=; expires="
+      status, headers, body = middleware.call("HTTP_COOKIE" => "request_recorder=1|#{existing_request_id};foo=bar")
+      headers["Set-Cookie"].should include "request_recorder=; expires="
     end
   end
 
-  it "should not record if __request_recording is not given" do
+  it "should not record if request_recorder is not given" do
     middleware.call(
       "QUERY_STRING" => "stuff=hello", "HTTP_COOKIE" => "bar=foo"
     )
@@ -118,7 +118,7 @@ describe RequestRecorder do
     stored.size.should == 0
 
     # request 1 - start + decrement + log
-    status, headers, body = middleware.call({"QUERY_STRING" => "__request_recording=3"})
+    status, headers, body = middleware.call({"QUERY_STRING" => "request_recorder=3"})
     stored.size.should == 1
     stored.values.last.scan("SELECT").size.should == 1
     cookie = headers["Set-Cookie"].split(";").first
@@ -134,7 +134,7 @@ describe RequestRecorder do
     stored.size.should == 1
     stored.values.last.scan("SELECT").size.should == 3
     cookie = headers["Set-Cookie"].split(";").first
-    cookie.should == "__request_recording="
+    cookie.should == "request_recorder="
 
     # request 4 - no more logging
     status, headers, body = middleware.call({})
