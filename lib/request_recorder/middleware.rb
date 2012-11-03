@@ -29,7 +29,7 @@ module RequestRecorder
       end
 
       steps_left, id = read_state_from_env(env)
-      return [500, {}, "__request_recording exceeded maximum value #{MAX_STEPS}"] if steps_left > MAX_STEPS
+      return [500, {}, "#{MARKER} exceeded maximum value #{MAX_STEPS}"] if steps_left > MAX_STEPS
       id = persist_log(id, log)
       response_with_data_in_cookie(result, steps_left, id)
     end
