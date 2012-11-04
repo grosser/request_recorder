@@ -21,8 +21,8 @@ Usage
 =====
 
  - request a page with `/something?request_recorder=10|my-session-name` -> record next 10 requests from my browser
- - redis 'request_recorder' gets a new entry with all the logging info from rails + activerecord
- - go to redis or build a nice frontend
+ - all the debug-level logging info from rails + activerecord gets stored
+ - get log directly from the store or use the frontend
 
 Frontend
 ========
