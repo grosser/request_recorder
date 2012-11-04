@@ -31,7 +31,7 @@ Frontend
 
     use RequestRecorder::Middleware, :frontent_auth => lambda{|env| env.warden.user.is_admin? }
 
-Go to /request_recorder/<key> and see the recorded log.
+Go to `/request_recorder/<key>` and see the recorded log.
 
 Author
 ======
