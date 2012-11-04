@@ -24,6 +24,15 @@ Usage
  - redis 'request_recorder' gets a new entry with all the logging info from rails + activerecord
  - go to redis or build a nice frontend
 
+Frontend
+========
+
+  Add :frontend_auth and find out if the current user is authorized
+
+    use RequestRecorder::Middleware, :frontent_auth => lambda{|env| env.warden.user.is_admin? }
+
+Go to /request_recorder/<key> and see the recorded log.
+
 Author
 ======
 [Michael Grosser](http://grosser.it)<br/>

@@ -114,6 +114,46 @@ describe RequestRecorder do
     }.to raise_error "Oooops"
   end
 
+  context "frontend" do
+    let(:store){ RequestRecorder::RedisLogger.new(redis) }
+    let(:middleware){
+      RequestRecorder::Middleware.new(
+        inner_app,
+        :store => store,
+        :frontend_auth => lambda{|env| env["success"] }
+      )
+    }
+
+    before do
+      store.write("xxx", "yyy")
+    end
+
+    it "can view a log" do
+      status, headers, body = middleware.call("PATH_INFO" => "/request_recorder/xxx", "success" => true)
+      status.should == 200
+      body.should include("yyy")
+    end
+
+    it "cannot view a log if auth fails" do
+      status, headers, body = middleware.call("PATH_INFO" => "/request_recorder/xxx")
+      status.should == 401
+      body.should_not include("yyy")
+    end
+
+    it "cannot view a missing log" do
+      status, headers, body = middleware.call("PATH_INFO" => "/request_recorder/missing-key", "success" => true)
+      status.should == 404
+      body.should include("missing-key")
+    end
+
+    it "warns about unconfigured :frontend_auth" do
+      middleware = RequestRecorder::Middleware.new(inner_app, :store => store)
+      status, headers, body = middleware.call("PATH_INFO" => "/request_recorder/xxx")
+      status.should == 500
+      body.should include(":frontend_auth")
+    end
+  end
+
   it "integrates" do
     stored.size.should == 0
 

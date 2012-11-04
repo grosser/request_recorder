@@ -2,6 +2,7 @@ require "stringio"
 require "rack/request"
 require "rack/response"
 require "request_recorder/repeater"
+require "request_recorder/frontend"
 require "active_record"
 
 module RequestRecorder
@@ -10,31 +11,51 @@ module RequestRecorder
     MAX_STEPS = 100
     SEPARATOR = "|"
     NEED_AUTOFLUSH = (ActiveRecord::VERSION::MAJOR == 2)
+    AUTH = :frontend_auth
 
     def initialize(app, options={})
       @app = app
       @store = options.fetch(:store)
+      @auth = options[AUTH]
     end
 
     def call(env)
       # keep this part as fast as possible, since 99.99999% of requests will not need it
-      return @app.call(env) unless (
-        (env["QUERY_STRING"] && env["QUERY_STRING"].include?(MARKER)) or
-        (env["HTTP_COOKIE"] && env["HTTP_COOKIE"].include?(MARKER))
-      )
+      return @app.call(env) unless "#{env["PATH_INFO"]}-#{env["QUERY_STRING"]}-#{env["HTTP_COOKIE"]}".include?(MARKER)
 
-      result = nil
-      log = capture_logging do
-        result = @app.call(env)
+      if env["PATH_INFO"].to_s.starts_with?("/#{MARKER}/")
+        key = env["PATH_INFO"].split("/")[2]
+        render_frontend(env, key)
+      else
+        result = nil
+        log = capture_logging do
+          result = @app.call(env)
+        end
+
+        steps_left, id = read_state_from_env(env)
+        return [500, {}, "#{MARKER} exceeded maximum value #{MAX_STEPS}"] if steps_left > MAX_STEPS
+        id = persist_log(id, log)
+        response_with_data_in_cookie(result, steps_left, id)
       end
-
-      steps_left, id = read_state_from_env(env)
-      return [500, {}, "#{MARKER} exceeded maximum value #{MAX_STEPS}"] if steps_left > MAX_STEPS
-      id = persist_log(id, log)
-      response_with_data_in_cookie(result, steps_left, id)
     end
 
     private
+
+    def render_frontend(env, key)
+      if @auth
+        if @auth.call(env)
+          if log = @store.read(key)
+            [200, {}, Frontend.render(log)]
+          else
+            [404, {}, "Did not find a log for key #{key}"]
+          end
+        else
+          [401, {}, "Unauthorized"]
+        end
+      else
+        [500, {}, "you need to provide #{AUTH.inspect} option"]
+      end
+    end
 
     def persist_log(id, log)
       @store.write(id, log)
