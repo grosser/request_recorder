@@ -1,10 +1,17 @@
 require "spec_helper"
 
 describe RequestRecorder do
+  class FooError < RuntimeError;end
+
   let(:original_logger){ ActiveSupport::BufferedLogger.new("/dev/null").instance_variable_get("@log") }
   let(:activate_logger){ {"QUERY_STRING" => "request_recorder=10"} }
   let(:inner_app){ lambda{|env|
     Car.first
+    if env["raise"]
+      # rails also logs errors
+      ActiveRecord::Base.logger.error(env["raise"])
+      raise FooError.new(env["raise"])
+    end
     [200, {}, "assadasd"]
   } }
   let(:middleware){ RequestRecorder::Middleware.new(inner_app, :store => RequestRecorder::RedisLogger.new(redis)) }
@@ -29,6 +36,15 @@ describe RequestRecorder do
   it "records activerecord queries" do
     middleware.call(activate_logger)
     stored.values.last.should include "SELECT"
+  end
+
+  it "records exceptions" do
+    begin
+      middleware.call(activate_logger.merge("raise" => "FooBarError"))
+      fail
+    rescue FooError
+    end
+    stored.values.last.should include "FooBarError"
   end
 
   it "still writes to the old log to keep us compliant with 'logging all requests'" do

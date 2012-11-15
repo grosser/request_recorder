@@ -29,13 +29,22 @@ module RequestRecorder
       else
         result = nil
         log = capture_logging do
-          result = @app.call(env)
+          begin
+            result = @app.call(env)
+          rescue Exception => e
+            result = e
+          end
         end
 
         steps_left, id = read_state_from_env(env)
         return [500, {}, "#{MARKER} exceeded maximum value #{MAX_STEPS}"] if steps_left > MAX_STEPS
         id = persist_log(id, log)
-        response_with_data_in_cookie(result, steps_left, id)
+
+        if result.is_a?(Exception)
+          raise result
+        else
+          response_with_data_in_cookie(result, steps_left, id)
+        end
       end
     end
 
