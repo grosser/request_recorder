@@ -198,7 +198,65 @@ describe RequestRecorder do
     stored.values.last.scan("SELECT").size.should == 3
   end
 
+  context "meta_request" do
+    def middleware(options={})
+      @middleware ||= RequestRecorder::Middleware.new(inner_app, {
+        :store => RequestRecorder::RedisLogger.new(redis),
+        :meta_request => true,
+        :frontend_auth => lambda{ |env| true }
+      }.merge(options))
+    end
+
+    context "fake version and request-id header" do
+      it "adds them" do
+        status, headers, body = middleware.call({"PATH_INFO" => "/"})
+        headers["X-Meta-Request-Version"].should == "__fake_version_for_rails_panel__"
+        headers["X-Request-Id"].should == "__fake_id_for_rails_panel__"
+        headers["Set-Cookie"].should == nil
+      end
+
+      it "does not add version or request-id if meta_request is disabled" do
+        status, headers, body = middleware(:meta_request => nil).call({"PATH_INFO" => "/"})
+        headers["X-Meta-Request-Version"].should == nil
+        headers["X-Request-Id"].should == nil
+      end
+
+      it "does not add version or request-id if frontend_auth is disabled" do
+        status, headers, body = middleware(:frontend_auth => nil).call({"PATH_INFO" => "/"})
+        headers["X-Meta-Request-Version"].should == nil
+        headers["X-Request-Id"].should == nil
+      end
+
+      it "does not add version or request-id if frontend_auth is false" do
+        status, headers, body = middleware(:frontend_auth => lambda{ |env| false }).call({"PATH_INFO" => "/"})
+        headers["X-Meta-Request-Version"].should == nil
+        headers["X-Request-Id"].should == nil
+      end
+    end
+
+    it "picks a random key on first __meta_request hit if none is there" do
+      status, headers, body = middleware.call("PATH_INFO" => "__meta_request/12345.json", "QUERY_STRING" => "")
+      headers["Set-Cookie"].should include "request_recorder=10%7C"
+    end
+
+    it "keeps existing keys and increases them to 10" do
+      status, headers, body = middleware.call("PATH_INFO" => "__meta_request/12345.json", "HTTP_COOKIE" => "request_recorder=8|#{existing_request_id}")
+      headers["Set-Cookie"].should include "request_recorder=10%7C"
+    end
+
+    it "responds with logs" do
+      status, headers, body = middleware.call("PATH_INFO" => "__meta_request/12345.json", "HTTP_COOKIE" => "request_recorder=8|#{existing_request_id}")
+      response_to_string(body).should == "BEFORE"
+    end
+  end
+
   private
+
+  def response_to_string(response)
+    string = ""
+    response.each{ |x| string << x }
+    string
+  end
 
   def stored
     redis.hgetall(redis_key)

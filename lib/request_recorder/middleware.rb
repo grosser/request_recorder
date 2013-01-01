@@ -17,9 +17,37 @@ module RequestRecorder
       @app = app
       @store = options.fetch(:store)
       @auth = options[AUTH]
+      @meta_request = options[:meta_request]
     end
 
     def call(env)
+      if @meta_request && @auth && @auth.call(env)
+        if env["PATH_INFO"].start_with?("__meta_request/")
+          steps_left, id = read_state_from_env(env)
+          if id # we already started recording
+            log = @store.read(id)
+            response_with_data_in_cookie([200, {}, log], 11, id)
+          else
+            # send back empty response but start logging
+            response_with_data_in_cookie([200, {}, ""], 11, rand(9999999))
+          end
+        else
+          fake_meta_request(*process_request(env))
+        end
+      else
+        process_request(env)
+      end
+    end
+
+    def fake_meta_request(status, headers, body)
+      headers['X-Meta-Request-Version'] = '__fake_version_for_rails_panel__'
+      headers['X-Request-Id'] ||= '__fake_id_for_rails_panel__'
+      [status, headers, body]
+    end
+
+    private
+
+    def process_request(env)
       # keep this part as fast as possible, since 99.99999% of requests will not need it
       return @app.call(env) unless "#{env["PATH_INFO"]}-#{env["QUERY_STRING"]}-#{env["HTTP_COOKIE"]}".include?(MARKER)
 
@@ -48,8 +76,6 @@ module RequestRecorder
       end
     end
 
-    private
-
     def render_frontend(env, key)
       if @auth
         if @auth.call(env)
@@ -73,6 +99,7 @@ module RequestRecorder
     def read_state_from_env(env)
       request = Rack::Request.new(env)
       value = request.cookies[MARKER] || env["QUERY_STRING"][/#{MARKER}=([^&]+)/, 1]
+      return unless value
       steps, id = value.split(SEPARATOR)
       [steps.to_i, id]
     end
