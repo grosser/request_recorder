@@ -4,6 +4,7 @@ require "rack/response"
 require "request_recorder/repeater"
 require "request_recorder/frontend"
 require "active_record"
+require "rack/body_proxy"
 
 module RequestRecorder
   class Middleware

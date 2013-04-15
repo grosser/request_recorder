@@ -99,12 +99,12 @@ describe RequestRecorder do
 
     it "decrements cookie on each step" do
       status, headers, body = middleware.call("HTTP_COOKIE" => "request_recorder=2|#{existing_request_id};foo=bar")
-      headers["Set-Cookie"].should include "request_recorder=1%7C#{existing_request_id}; expires="
+      headers["Set-Cookie"].sub(" max-age=0;", "").should include "request_recorder=1%7C#{existing_request_id}; expires="
     end
 
     it "removes cookie if final step is reached" do
       status, headers, body = middleware.call("HTTP_COOKIE" => "request_recorder=1|#{existing_request_id};foo=bar")
-      headers["Set-Cookie"].should include "request_recorder=; expires="
+      headers["Set-Cookie"].sub(" max-age=0;", "").should include "request_recorder=; expires="
     end
   end
 

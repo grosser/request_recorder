@@ -6,7 +6,7 @@ PATH
       rack
 
 GEM
-  remote: http://rubygems.org/
+  remote: https://rubygems.org/
   specs:
     activerecord (2.3.14)
       activesupport (= 2.3.14)
