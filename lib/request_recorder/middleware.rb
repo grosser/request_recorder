@@ -4,7 +4,8 @@ require "rack/response"
 require "request_recorder/repeater"
 require "request_recorder/frontend"
 require "active_record"
-require "rack/body_proxy"
+require "rack"
+require "rack/body_proxy" if defined?(Rack.release) && Rack.release >= "1.5"
 
 module RequestRecorder
   class Middleware

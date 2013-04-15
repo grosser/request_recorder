@@ -8,6 +8,7 @@ gem "rake"
 gem "rspec", "~>2"
 gem "sqlite3"
 gem "fakeredis"
+gem "rack", "~> 1.1.6"
 gem "activerecord", "~>2.3.14"
 
 gemspec :path=>"../"
