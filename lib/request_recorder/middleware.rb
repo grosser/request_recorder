@@ -6,12 +6,14 @@ require "request_recorder/frontend"
 require "active_record"
 require "rack"
 require "rack/body_proxy" if defined?(Rack.release) && Rack.release >= "1.5"
+require "base64"
+require "multi_json"
 
 module RequestRecorder
   class Middleware
     MARKER = "request_recorder"
     MAX_STEPS = 100
-    SEPARATOR = "|"
+    SEPARATOR = "-"
     NEED_AUTOFLUSH = (ActiveRecord::VERSION::MAJOR == 2)
     AUTH = :frontend_auth
 
@@ -45,7 +47,12 @@ module RequestRecorder
         if result.is_a?(Exception)
           raise result
         else
-          response_with_data_in_cookie(result, steps_left, id)
+
+          if @auth && @auth.call(env)
+            extra_headers = chrome_logger_headers(log)
+          end
+
+          response_with_data_in_cookie(result, steps_left, id, extra_headers)
         end
       end
     end
@@ -79,9 +86,9 @@ module RequestRecorder
       [steps.to_i, id]
     end
 
-    def response_with_data_in_cookie(result, to_go, id)
+    def response_with_data_in_cookie(result, to_go, id, extra_headers)
       status, headers, body = result
-      response = Rack::Response.new(body, status, headers)
+      response = Rack::Response.new(body, status, headers.merge(extra_headers || {}))
       if to_go <= 1
         response.delete_cookie(MARKER)
       else
@@ -89,6 +96,20 @@ module RequestRecorder
       end
 
       response.finish # finish writes out the response in the expected format.
+    end
+
+    def chrome_logger_headers(log, headers)
+      data = {
+        'version' => "0.1.1",
+        'columns' => [ 'log' , 'backtrace' , 'type' ],
+        'rows'    =>
+          [
+            [["Rails log"],"xxx.rb:1","group"],
+            *log.split("\n").map{|line| [line.split(" "), "xxx.rb:1", ""] },
+            [[], "xxx.rb:1", "groupEnd"],
+          ]
+      }
+      {"X-ChromeLogger-Data" => Base64.encode64(MultiJson.dump(data).encode("UTF-8")).gsub("\n", "")}
     end
 
     def capture_logging

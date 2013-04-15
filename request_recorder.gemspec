@@ -10,5 +10,6 @@ Gem::Specification.new name, RequestRecorder::VERSION do |s|
   s.files = `git ls-files`.split("\n")
   s.license = "MIT"
   s.add_runtime_dependency "rack"
+  s.add_runtime_dependency "multi_json"
   s.add_runtime_dependency "activerecord"
 end
