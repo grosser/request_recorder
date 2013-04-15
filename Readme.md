@@ -1,4 +1,4 @@
-Record your rack/rails requests and store them for future inspection
+Record your rack/rails requests and store them for future inspection + see them in your chrome console.
 
 Install
 =======
@@ -10,12 +10,9 @@ Add to your middleware stack:
     require "request_recorder"
 
     require "request_recorder/cache_logger"
-    use RequestRecorder::Middleware, :store => RequestRecorder::CacheLogger.new(Rails.cache)
-
-    -- or --
-
-    require "request_recorder/redis_logger"
-    use RequestRecorder::Middleware, :store => RequestRecorder::RedisLogger.new(Redis.new)
+    use RequestRecorder::Middleware,
+      :store => RequestRecorder::CacheLogger.new(Rails.cache),
+      :frontend_auth => lambda { |env| Rails.env.development? } # TODO use something like `env.warden.user.is_admin?` in production
 
 Usage
 =====
@@ -24,14 +21,19 @@ Usage
  - all the debug-level logging info from rails + activerecord gets stored
  - get log directly from the store or use the frontend
 
+Chrome console
+==============
+(needs `:frontend_auth`)
+
+ - Install [Chrome extension](https://chrome.google.com/webstore/detail/chrome-logger/noaneddfkdjfnfdakjjmocngnfkfehhd)
+ - Enable it<br/> ![Enable](http://cdn.craig.is/img/chromelogger/toggle.gif)
+ - Open console<br/> ![Profit](https://dl.dropboxusercontent.com/u/2670385/Web/request_recorder_output.png)
+
 Frontend
 ========
-
-  Add :frontend_auth and find out if the current user is authorized
-
-    use RequestRecorder::Middleware, :frontent_auth => lambda{|env| env.warden.user.is_admin? }
-
-Go to `/request_recorder/<key>` and see the recorded log.
+(needs `:frontend_auth`)
+See the log of all requests in an entire session: `/request_recorder/my_session_name`.
+This also includes requests that did not get shown in the chrome logger like redirects.
 
 Author
 ======

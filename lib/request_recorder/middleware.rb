@@ -45,13 +45,9 @@ module RequestRecorder
         id = persist_log(id, log)
 
         if result.is_a?(Exception)
-          raise result
+          raise result # Do not mess up the apps normal exception behavior
         else
-
-          if @auth && @auth.call(env)
-            extra_headers = chrome_logger_headers(log)
-          end
-
+          extra_headers = chrome_logger_headers(log) if @auth && @auth.call(env)
           response_with_data_in_cookie(result, steps_left, id, extra_headers)
         end
       end
