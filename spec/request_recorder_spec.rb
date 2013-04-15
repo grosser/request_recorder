@@ -63,7 +63,7 @@ describe RequestRecorder do
   end
 
   it "starts with a given key" do
-    middleware.call({"QUERY_STRING" => "request_recorder=10|abcdefg"})
+    middleware.call({"QUERY_STRING" => "request_recorder=10-abcdefg"})
     redis.hget(redis_key, "abcdefg").should include "SELECT"
   end
 
@@ -77,12 +77,12 @@ describe RequestRecorder do
     it "sets cookie in first step" do
       status, headers, body = middleware.call(activate_logger)
       generated_id = stored.keys.last
-      headers["Set-Cookie"].should include "request_recorder=9%7C#{generated_id.gsub(":", "%3A").gsub(" ", "+")}; expires="
+      headers["Set-Cookie"].should include "request_recorder=9-#{generated_id.gsub(":", "%3A").gsub(" ", "+")}; expires="
       headers["Set-Cookie"].should include "; HttpOnly"
     end
 
     it "appends to existing log" do
-      middleware.call("HTTP_COOKIE" => "request_recorder=8|#{existing_request_id}")
+      middleware.call("HTTP_COOKIE" => "request_recorder=8-#{existing_request_id}")
       existing_request = redis.hget(redis_key, existing_request_id)
       existing_request.should include "SELECT"
       existing_request.should include "BEFORE"
@@ -91,19 +91,19 @@ describe RequestRecorder do
     it "creates a new log if redis dies" do
       existing_request_id # store key
       redis.flushall
-      middleware.call("HTTP_COOKIE" => "request_recorder=8|#{existing_request_id}")
+      middleware.call("HTTP_COOKIE" => "request_recorder=8-#{existing_request_id}")
       existing_request = redis.hget(redis_key, existing_request_id)
       existing_request.should include "SELECT"
       existing_request.should_not include "BEFORE"
     end
 
     it "decrements cookie on each step" do
-      status, headers, body = middleware.call("HTTP_COOKIE" => "request_recorder=2|#{existing_request_id};foo=bar")
-      headers["Set-Cookie"].sub(" max-age=0;", "").should include "request_recorder=1%7C#{existing_request_id}; expires="
+      status, headers, body = middleware.call("HTTP_COOKIE" => "request_recorder=2-#{existing_request_id};foo=bar")
+      headers["Set-Cookie"].sub(" max-age=0;", "").should include "request_recorder=1-#{existing_request_id}; expires="
     end
 
     it "removes cookie if final step is reached" do
-      status, headers, body = middleware.call("HTTP_COOKIE" => "request_recorder=1|#{existing_request_id};foo=bar")
+      status, headers, body = middleware.call("HTTP_COOKIE" => "request_recorder=1-#{existing_request_id};foo=bar")
       headers["Set-Cookie"].sub(" max-age=0;", "").should include "request_recorder=; expires="
     end
   end
@@ -174,7 +174,7 @@ describe RequestRecorder do
     stored.size.should == 0
 
     # request 1 - start + decrement + log
-    status, headers, body = middleware.call({"QUERY_STRING" => "request_recorder=3"})
+    status, headers, body = middleware.call({"QUERY_STRING" => "request_recorder=3-foo"})
     stored.size.should == 1
     stored.values.last.scan("SELECT").size.should == 1
     cookie = headers["Set-Cookie"].split(";").first

@@ -20,7 +20,7 @@ Add to your middleware stack:
 Usage
 =====
 
- - request a page with `/something?request_recorder=10|my-session-name` -> record next 10 requests from my browser
+ - request a page with `/something?request_recorder=10-my_session_name` -> record next 10 requests from my browser
  - all the debug-level logging info from rails + activerecord gets stored
  - get log directly from the store or use the frontend
 

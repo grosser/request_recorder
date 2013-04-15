@@ -3,6 +3,7 @@ PATH
   specs:
     request_recorder (0.1.2)
       activerecord
+      multi_json
       rack
 
 GEM
@@ -29,6 +30,7 @@ GEM
     fakeredis (0.4.2)
       redis (~> 3.0.0)
     i18n (0.6.1)
+    json (1.7.7)
     multi_json (1.7.2)
     rack (1.5.2)
     rake (10.0.4)
@@ -52,6 +54,7 @@ DEPENDENCIES
   appraisal
   bump
   fakeredis
+  json
   rake
   request_recorder!
   rspec (~> 2)

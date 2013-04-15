@@ -8,6 +8,7 @@ gem "rake"
 gem "rspec", "~>2"
 gem "sqlite3"
 gem "fakeredis"
+gem "json"
 gem "rack", ">= 1.5.2"
 gem "activerecord", "~>3.2.7"
 
