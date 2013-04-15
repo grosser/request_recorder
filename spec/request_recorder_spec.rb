@@ -168,6 +168,29 @@ describe RequestRecorder do
       status.should == 500
       body.should include(":frontend_auth")
     end
+
+    context "chrome logger" do
+      it "logs into chrome logger" do
+        status, headers, body = middleware.call("QUERY_STRING" => "request_recorder=10-xxx", "success" => true)
+        headers["X-ChromeLogger-Data"].should_not == nil
+        data = MultiJson.load(Base64.decode64(headers["X-ChromeLogger-Data"]))
+        data["rows"][1][0][2..-1] = "---" # remove timing information + activerecord 2/3 diff
+        data.should == {
+          "version"=>"0.1.1",
+          "columns"=>["log", "backtrace", "type"],
+          "rows"=>[
+            [["Rails log"], "xxx.rb:1", "group"],
+            [["Car", "Load", "---"], "xxx.rb:1", ""],
+            [[], "xxx.rb:1", "groupEnd"]
+          ]
+        }
+      end
+
+      it "does not log without frontend_auth" do
+        status, headers, body = middleware.call("QUERY_STRING" => "request_recorder=10-xxx")
+        headers["X-ChromeLogger-Data"].should == nil
+      end
+    end
   end
 
   it "integrates" do

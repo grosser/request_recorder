@@ -98,18 +98,22 @@ module RequestRecorder
       response.finish # finish writes out the response in the expected format.
     end
 
-    def chrome_logger_headers(log, headers)
+    def chrome_logger_headers(log)
       data = {
         'version' => "0.1.1",
         'columns' => [ 'log' , 'backtrace' , 'type' ],
         'rows'    =>
           [
             [["Rails log"],"xxx.rb:1","group"],
-            *log.split("\n").map{|line| [line.split(" "), "xxx.rb:1", ""] },
+            *log.split("\n").map{|line| [remove_console_colors(line).split(" "), "xxx.rb:1", ""] },
             [[], "xxx.rb:1", "groupEnd"],
           ]
       }
       {"X-ChromeLogger-Data" => Base64.encode64(MultiJson.dump(data).encode("UTF-8")).gsub("\n", "")}
+    end
+
+    def remove_console_colors(string)
+      string.gsub(/\e\[[\d;]+m/, "")
     end
 
     def capture_logging
