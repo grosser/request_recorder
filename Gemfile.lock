@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    request_recorder (0.2.0)
+    request_recorder (0.2.1)
       activerecord
       multi_json
       rack
