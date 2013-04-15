@@ -29,7 +29,7 @@ Chrome console
  - Enable it<br/> ![Enable](http://cdn.craig.is/img/chromelogger/toggle.gif)
  - Open console<br/> ![Profit](https://dl.dropboxusercontent.com/u/2670385/Web/request_recorder_output.png)
 
-Frontend
+Web-frontend
 ========
 (needs `:frontend_auth`)
 See the log of all requests in an entire session: `/request_recorder/my_session_name`.
