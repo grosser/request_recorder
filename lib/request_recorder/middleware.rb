@@ -95,17 +95,24 @@ module RequestRecorder
     end
 
     def chrome_logger_headers(log)
+      # fake chrome-logger format
+      rows = []
+      rows << [["Rails log"],"xxx.rb:1","group"]
+      rows.concat log.split("\n").map{|line| [remove_console_colors(line).split(" "), "xxx.rb:1", ""] }
+      rows << [[], "xxx.rb:1", "groupEnd"]
+
       data = {
         'version' => "0.1.1",
         'columns' => [ 'log' , 'backtrace' , 'type' ],
-        'rows'    =>
-          [
-            [["Rails log"],"xxx.rb:1","group"],
-            *log.split("\n").map{|line| [remove_console_colors(line).split(" "), "xxx.rb:1", ""] },
-            [[], "xxx.rb:1", "groupEnd"],
-          ]
+        'rows'    => rows
       }
-      {"X-ChromeLogger-Data" => Base64.encode64(MultiJson.dump(data).encode("UTF-8")).gsub("\n", "")}
+
+      # encode
+      data = MultiJson.dump(data)
+      data = data.encode("UTF-8") if defined?(Encoding)
+      data = Base64.encode64(data).gsub("\n", "")
+
+      {"X-ChromeLogger-Data" => data}
     end
 
     def remove_console_colors(string)
