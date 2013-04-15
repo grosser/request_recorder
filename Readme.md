@@ -25,7 +25,7 @@ Chrome console
 ==============
 (needs `:frontend_auth`)
 
- - Install [Chrome extension](https://chrome.google.com/webstore/detail/chrome-logger/noaneddfkdjfnfdakjjmocngnfkfehhd)
+ - Install [Chrome extension](https://chrome.google.com/webstore/detail/chrome-logger/noaneddfkdjfnfdakjjmocngnfkfehhd) by [Ryan Cook](https://github.com/cookrn)
  - Enable it<br/> ![Enable](http://cdn.craig.is/img/chromelogger/toggle.gif)
  - Open console<br/> ![Profit](https://dl.dropboxusercontent.com/u/2670385/Web/request_recorder_output.png)
 
