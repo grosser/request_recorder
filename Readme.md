@@ -32,7 +32,10 @@ Chrome console
 Web-frontend
 ========
 (needs `:frontend_auth`)
-See the log of all requests in an entire session: `/request_recorder/my_session_name`.
+
+![Frontend](https://dl.dropboxusercontent.com/u/2670385/Web/request_recorder_frontend.png)
+
+See the log of **all** requests in the session: `/request_recorder/my_session_name`.
 This also includes requests that did not get shown in the chrome logger like redirects.
 
 Author
