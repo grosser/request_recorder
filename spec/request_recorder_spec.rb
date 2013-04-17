@@ -7,6 +7,9 @@ describe RequestRecorder do
   let(:activate_logger){ {"QUERY_STRING" => "request_recorder=10"} }
   let(:inner_app){ lambda{|env|
     Car.first
+
+    (env["log"] || []).each { |line| ActiveRecord::Base.logger.info(line) }
+
     if env["raise"]
       # rails also logs errors
       ActiveRecord::Base.logger.error(env["raise"])
@@ -136,7 +139,8 @@ describe RequestRecorder do
       RequestRecorder::Middleware.new(
         inner_app,
         :store => store,
-        :frontend_auth => lambda{|env| env["success"] }
+        :frontend_auth => lambda{|env| env["success"] },
+        :headers => {:max => 1000}
       )
     }
 
@@ -163,17 +167,21 @@ describe RequestRecorder do
     end
 
     it "warns about unconfigured :frontend_auth" do
-      middleware = RequestRecorder::Middleware.new(inner_app, :store => store)
+      middleware = RequestRecorder::Middleware.new(inner_app, :store => store, :max_header_size => 1000)
       status, headers, body = middleware.call("PATH_INFO" => "/request_recorder/xxx")
       status.should == 500
       body.should include(":frontend_auth")
     end
 
     context "chrome logger" do
+      def decode(headers)
+        MultiJson.load(Base64.decode64(headers["X-ChromeLogger-Data"]))
+      end
+
       it "logs into chrome logger" do
         status, headers, body = middleware.call("QUERY_STRING" => "request_recorder=10-xxx", "success" => true)
         headers["X-ChromeLogger-Data"].should_not == nil
-        data = MultiJson.load(Base64.decode64(headers["X-ChromeLogger-Data"]))
+        data = decode(headers)
         data["rows"][1][0][2..-1] = "---" # remove timing information + activerecord 2/3 diff
         data.should == {
           "version"=>"0.1.1",
@@ -184,6 +192,16 @@ describe RequestRecorder do
             [[], "xxx.rb:1", "groupEnd"]
           ]
         }
+      end
+
+      it "removes header length above max" do
+        status, headers, body = middleware.call(
+          "QUERY_STRING" => "request_recorder=10-xxx",
+          "success" => true,
+          "log" => Array.new(20).fill(("a" * 100) + "\n") # TODO \n should not be necessary but seems to be working fine in normal rails ... wtf
+        )
+        headers["X-ChromeLogger-Data"].size.should be_within(200).of(1700)
+        decode(headers)["rows"].inspect.should include "Removed" # tells users that something was removed
       end
 
       it "does not log without frontend_auth" do

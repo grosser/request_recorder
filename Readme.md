@@ -13,6 +13,8 @@ Add to your middleware stack:
     use RequestRecorder::Middleware,
       :store => RequestRecorder::CacheLogger.new(Rails.cache),
       :frontend_auth => lambda { |env| Rails.env.development? } # TODO use something like `env.warden.user.is_admin?` in production
+      # if you get 502's because of too large headers, you can reduce them
+      # :header => {:max => 10_000, :remove => [/SELECT count(\*)/, /SELECT \* FROM/, /Cache local read/, /Cache read/, /Identity Map/] }
 
 Usage
 =====

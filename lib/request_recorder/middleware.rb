@@ -21,6 +21,7 @@ module RequestRecorder
       @app = app
       @store = options.fetch(:store)
       @auth = options[AUTH]
+      @headers = options[:headers] || {}
     end
 
     def call(env)
@@ -95,10 +96,14 @@ module RequestRecorder
     end
 
     def chrome_logger_headers(log)
+      log = log.split("\n")
+      log = reduce_to_size(log, @headers[:max]) if @headers[:max]
+
+
       # fake chrome-logger format
       rows = []
       rows << [["Rails log"],"xxx.rb:1","group"]
-      rows.concat log.split("\n").map{|line| [remove_console_colors(line).split(" "), "xxx.rb:1", ""] }
+      rows.concat log.map{|line| [remove_console_colors(line).split(" "), "xxx.rb:1", ""] }
       rows << [[], "xxx.rb:1", "groupEnd"]
 
       data = {
@@ -113,6 +118,19 @@ module RequestRecorder
       data = Base64.encode64(data).gsub("\n", "")
 
       {"X-ChromeLogger-Data" => data}
+    end
+
+    def reduce_to_size(array, size)
+      return array if array.sum(&:size) <= size
+
+      size -= 20 # make room for removed message
+      removed = 0
+      while array.sum(&:size) > size
+        removed += 1
+        array.pop
+      end
+      array << "Removed #{removed} lines"
+      array
     end
 
     def remove_console_colors(string)
