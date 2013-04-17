@@ -48,7 +48,8 @@ module RequestRecorder
         if result.is_a?(Exception)
           raise result # Do not mess up the apps normal exception behavior
         else
-          extra_headers = chrome_logger_headers(log) if @auth && @auth.call(env)
+          path = [env["PATH_INFO"], env["QUERY_STRING"]].compact.join("?")
+          extra_headers = chrome_logger_headers(log, path) if @auth && @auth.call(env)
           response_with_data_in_cookie(result, steps_left, id, extra_headers)
         end
       end
@@ -95,14 +96,14 @@ module RequestRecorder
       response.finish # finish writes out the response in the expected format.
     end
 
-    def chrome_logger_headers(log)
+    def chrome_logger_headers(log, path)
       log = log.split("\n").map { |line| remove_console_colors(line) }
       log = reduce_header_size(log) if @headers
 
 
       # fake chrome-logger format
       rows = []
-      rows << [["Rails log"],"xxx.rb:1","group"]
+      rows << [["Rails log #{path}"],"xxx.rb:1","group"]
       rows.concat log.map{|line| [line.split(" "), "xxx.rb:1", ""] }
       rows << [[], "xxx.rb:1", "groupEnd"]
 
@@ -128,8 +129,10 @@ module RequestRecorder
       removed_count = 0
       removed_match = []
 
+      unimportant = (@headers[:remove] || []).dup
+
       while array.sum(&:size) > size
-        if remove = (@headers[:remove] || []).pop
+        if remove = unimportant.shift
           removed_match << remove
           array.reject! { |line| line =~ remove }
         else

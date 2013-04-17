@@ -187,7 +187,7 @@ describe RequestRecorder do
           "version"=>"0.1.1",
           "columns"=>["log", "backtrace", "type"],
           "rows"=>[
-            [["Rails log"], "xxx.rb:1", "group"],
+            [["Rails log request_recorder=10-xxx"], "xxx.rb:1", "group"],
             [["Car", "Load", "---"], "xxx.rb:1", ""],
             [[], "xxx.rb:1", "groupEnd"]
           ]

@@ -17,5 +17,14 @@ describe RequestRecorder::Middleware do
         "a" * 40, "c" * 40, "Removed: all /b/"
       ]
     end
+
+    it "can remove multiple times" do
+      middleware.send(:reduce_header_size, ["a" * 40,"b"*40,"c" * 40]).should == [
+        "a" * 40, "c" * 40, "Removed: all /b/"
+      ]
+      middleware.send(:reduce_header_size, ["a" * 40,"b"*40,"c" * 40]).should == [
+        "a" * 40, "c" * 40, "Removed: all /b/"
+      ]
+    end
   end
 end
