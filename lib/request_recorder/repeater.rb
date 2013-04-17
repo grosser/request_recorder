@@ -15,7 +15,7 @@ module RequestRecorder
         if t.respond_to?(:add)
           t.add(*args)
         else
-          t.write(args[1])
+          t.write("#{args[1]}\n")
         end
       end
     end

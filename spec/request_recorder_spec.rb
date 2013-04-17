@@ -198,10 +198,10 @@ describe RequestRecorder do
         status, headers, body = middleware.call(
           "QUERY_STRING" => "request_recorder=10-xxx",
           "success" => true,
-          "log" => Array.new(20).fill(("a" * 100) + "\n") # TODO \n should not be necessary but seems to be working fine in normal rails ... wtf
+          "log" => Array.new(20).fill(("a" * 100))
         )
         headers["X-ChromeLogger-Data"].size.should be_within(200).of(1700)
-        decode(headers)["rows"].inspect.should include "Removed" # tells users that something was removed
+        decode(headers)["rows"].inspect.should include '"Removed:", "12", "lines"' # tells users that something was removed
       end
 
       it "does not log without frontend_auth" do

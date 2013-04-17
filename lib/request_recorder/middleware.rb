@@ -96,14 +96,14 @@ module RequestRecorder
     end
 
     def chrome_logger_headers(log)
-      log = log.split("\n")
-      log = reduce_to_size(log, @headers[:max]) if @headers[:max]
+      log = log.split("\n").map { |line| remove_console_colors(line) }
+      log = reduce_header_size(log) if @headers
 
 
       # fake chrome-logger format
       rows = []
       rows << [["Rails log"],"xxx.rb:1","group"]
-      rows.concat log.map{|line| [remove_console_colors(line).split(" "), "xxx.rb:1", ""] }
+      rows.concat log.map{|line| [line.split(" "), "xxx.rb:1", ""] }
       rows << [[], "xxx.rb:1", "groupEnd"]
 
       data = {
@@ -120,16 +120,30 @@ module RequestRecorder
       {"X-ChromeLogger-Data" => data}
     end
 
-    def reduce_to_size(array, size)
+    def reduce_header_size(array)
+      size = @headers.fetch(:max)
       return array if array.sum(&:size) <= size
 
       size -= 20 # make room for removed message
-      removed = 0
+      removed_count = 0
+      removed_match = []
+
       while array.sum(&:size) > size
-        removed += 1
-        array.pop
+        if remove = (@headers[:remove] || []).pop
+          removed_match << remove
+          array.reject! { |line| line =~ remove }
+        else
+          removed_count += 1
+          array.shift
+        end
       end
-      array << "Removed #{removed} lines"
+
+      # tell user what was removed
+      message = []
+      message << "all #{removed_match.map(&:inspect).join(", ")}" if removed_match.any?
+      message << "#{removed_count} lines" if removed_count > 0
+      array << "Removed: #{message.join(", ")}"
+
       array
     end
 

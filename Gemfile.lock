@@ -50,11 +50,12 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  activerecord
+  activerecord (>= 3)
   appraisal
   bump
   fakeredis
   json
+  rack (>= 1.5.2)
   rake
   request_recorder!
   rspec (~> 2)

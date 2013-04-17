@@ -4,6 +4,5 @@ appraise "rails2" do
 end
 
 appraise "rails3" do
-  gem "rack", ">= 1.5.2"
-  gem "activerecord", "~>3.2.7"
+  # see Gemfile
 end
