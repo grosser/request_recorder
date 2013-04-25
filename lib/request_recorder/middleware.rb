@@ -1,20 +1,19 @@
 require "stringio"
 require "rack/request"
 require "rack/response"
-require "request_recorder/repeater"
 require "request_recorder/frontend"
 require "active_record"
 require "rack"
 require "rack/body_proxy" if defined?(Rack.release) && Rack.release >= "1.5"
 require "base64"
 require "multi_json"
+require "logcast/rails"
 
 module RequestRecorder
   class Middleware
     MARKER = "request_recorder"
     MAX_STEPS = 100
     SEPARATOR = "-"
-    NEED_AUTOFLUSH = (ActiveRecord::VERSION::MAJOR == 2)
     AUTH = :frontend_auth
 
     def initialize(app, options={})
@@ -154,27 +153,18 @@ module RequestRecorder
       string.gsub(/\e\[[\d;]+m/, "")
     end
 
-    def capture_logging
-      old = [
-        ActiveRecord::Base.logger.instance_variable_get("@log"),
-        (ActiveRecord::Base.logger.auto_flushing if NEED_AUTOFLUSH),
-        ActiveRecord::Base.logger.level
-      ]
-
+    def capture_logging(&block)
+      logger = ActiveRecord::Base.logger
       recorder = StringIO.new
-      repeater = Repeater.new([recorder, old[0]])
-
-      ActiveRecord::Base.logger.instance_variable_set("@log", repeater)
-      ActiveRecord::Base.logger.auto_flushing = true if NEED_AUTOFLUSH
-      ActiveRecord::Base.logger.level = Logger::DEBUG
-      yield
+      debug_level(logger){ logger.subscribe(Logger.new(recorder), &block) }
       recorder.string
+    end
+
+    def debug_level(logger)
+      old, logger.level = logger.level, Logger::DEBUG
+      yield
     ensure
-      if old
-        ActiveRecord::Base.logger.instance_variable_set("@log", old[0])
-        ActiveRecord::Base.logger.auto_flushing = old[1] if NEED_AUTOFLUSH
-        ActiveRecord::Base.logger.level = old[2]
-      end
+      logger.level = old
     end
   end
 end

@@ -3,28 +3,27 @@ require "spec_helper"
 describe RequestRecorder do
   class FooError < RuntimeError;end
 
-  let(:original_logger){ ActiveSupport::BufferedLogger.new("/dev/null").instance_variable_get("@log") }
-  let(:activate_logger){ {"QUERY_STRING" => "request_recorder=10"} }
-  let(:inner_app){ lambda{|env|
-    Car.first
+  let(:activate_logger){{ "QUERY_STRING" => "request_recorder=10" }}
+  let(:middleware) { RequestRecorder::Middleware.new(inner_app, :store => RequestRecorder::RedisLogger.new(redis)) }
+  let(:inner_app) do
+    lambda do |env|
+      Car.first
 
-    (env["log"] || []).each { |line| ActiveRecord::Base.logger.info(line) }
+      (env["log"] || []).each { |line| ActiveRecord::Base.logger.info(line) }
 
-    if env["raise"]
-      # rails also logs errors
-      ActiveRecord::Base.logger.error(env["raise"])
-      raise FooError.new(env["raise"])
+      if env["raise"]
+        # rails also logs errors
+        ActiveRecord::Base.logger.error(env["raise"])
+        raise FooError.new(env["raise"])
+      end
+      [200, {}, "assadasd"]
     end
-    [200, {}, "assadasd"]
-  } }
-  let(:middleware){ RequestRecorder::Middleware.new(inner_app, :store => RequestRecorder::RedisLogger.new(redis)) }
+  end
   let(:redis){ FakeRedis::Redis.new }
   let(:redis_key){ RequestRecorder::RedisLogger::KEY }
   let(:existing_request_id){ redis.hset(redis_key, "123_456", "BEFORE") ; "123_456"}
 
   before do
-    ActiveRecord::Base.logger.instance_variable_set("@log", original_logger)
-    ActiveRecord::Base.logger.auto_flushing = 1000 if RequestRecorder::Middleware::NEED_AUTOFLUSH
     ActiveRecord::Base.logger.level = Logger::ERROR
   end
 
@@ -48,21 +47,6 @@ describe RequestRecorder do
     rescue FooError
     end
     stored.values.last.should include "FooBarError"
-  end
-
-  it "still writes to the old log to keep us compliant with 'logging all requests'" do
-    if ActiveRecord::VERSION::MAJOR == 2
-      recorder = StringIO.new
-      ActiveRecord::Base.logger.instance_variable_set("@log", recorder)
-      middleware.call(activate_logger)
-      recorder.string.should == stored.values.last
-    else
-      Tempfile.open("xx") do |f|
-        ActiveRecord::Base.logger.instance_variable_set("@log", Logger.new(f.path))
-        middleware.call(activate_logger)
-        File.read(f.path).strip.should == stored.values.last.strip
-      end
-    end
   end
 
   it "starts with a given key" do
@@ -120,9 +104,6 @@ describe RequestRecorder do
 
   it "restores the AR logger after executing" do
     middleware.call(activate_logger)
-
-    ActiveRecord::Base.logger.instance_variable_get("@log").object_id.should == original_logger.object_id
-    ActiveRecord::Base.logger.auto_flushing.should == 1000 if RequestRecorder::Middleware::NEED_AUTOFLUSH
     ActiveRecord::Base.logger.level.should == Logger::ERROR
   end
 
@@ -192,16 +173,6 @@ describe RequestRecorder do
             [[], "xxx.rb:1", "groupEnd"]
           ]
         }
-      end
-
-      it "removes header length above max" do
-        status, headers, body = middleware.call(
-          "QUERY_STRING" => "request_recorder=10-xxx",
-          "success" => true,
-          "log" => Array.new(20).fill(("a" * 100))
-        )
-        headers["X-ChromeLogger-Data"].size.should be_within(200).of(1700)
-        decode(headers)["rows"].inspect.should include '"Removed:", "12", "lines"' # tells users that something was removed
       end
 
       it "does not log without frontend_auth" do
