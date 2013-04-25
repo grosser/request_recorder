@@ -11,6 +11,5 @@ gem "rack", ">= 1.5.2"
 gem "sqlite3"
 gem "fakeredis"
 gem "json"
-gem "logcast", :git=>"git@github.com:grosser/logcast.git"
 
 gemspec :path=>"../"

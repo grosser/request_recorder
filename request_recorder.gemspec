@@ -12,5 +12,5 @@ Gem::Specification.new name, RequestRecorder::VERSION do |s|
   s.add_runtime_dependency "rack"
   s.add_runtime_dependency "multi_json"
   s.add_runtime_dependency "activerecord"
-  s.add_runtime_dependency "logcast"
+  s.add_runtime_dependency "logcast", ">= 0.1.4"
 end

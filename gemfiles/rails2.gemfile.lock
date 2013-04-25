@@ -1,15 +1,9 @@
-GIT
-  remote: git@github.com:grosser/logcast.git
-  revision: 20176870c7c94760cd04ddb3d19bd6e6466ea0f6
-  specs:
-    logcast (0.1.3)
-
 PATH
   remote: /Users/mgrosser/code/tools/request_recorder
   specs:
     request_recorder (0.2.4)
       activerecord
-      logcast
+      logcast (>= 0.1.4)
       multi_json
       rack
 
@@ -27,6 +21,7 @@ GEM
     fakeredis (0.4.2)
       redis (~> 3.0.0)
     json (1.7.7)
+    logcast (0.1.4)
     multi_json (1.7.2)
     rack (1.1.6)
     rake (10.0.4)
@@ -50,7 +45,6 @@ DEPENDENCIES
   bump
   fakeredis
   json
-  logcast!
   rack (~> 1.1.6)
   rake
   request_recorder!
