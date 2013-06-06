@@ -25,7 +25,7 @@ module RequestRecorder
 
     def call(env)
       # keep this part as fast as possible, since 99.99999% of requests will not need it
-      return @app.call(env) unless "#{env["PATH_INFO"]}-#{env["QUERY_STRING"]}-#{env["HTTP_COOKIE"]}".include?(MARKER)
+      return @app.call(env) unless "#{env["PATH_INFO"]}-#{env["QUERY_STRING"]}-#{env["HTTP_COOKIE"]}" =~ /#{MARKER}[\/=]/
 
       if env["PATH_INFO"].to_s.starts_with?("/#{MARKER}/")
         key = env["PATH_INFO"].split("/")[2]

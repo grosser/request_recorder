@@ -102,6 +102,13 @@ describe RequestRecorder do
     stored.count.should == 0
   end
 
+  it "ignores requests with redirects" do
+    middleware.call(
+      "QUERY_STRING" => "login?return_to=http%3A%2F%2Fsupport.localhost%3A3000%2Frequest_recorder%2Fxxx", "HTTP_COOKIE" => "bar=foo"
+    )
+    stored.count.should == 0
+  end
+
   it "restores the AR logger after executing" do
     middleware.call(activate_logger)
     ActiveRecord::Base.logger.level.should == Logger::ERROR
