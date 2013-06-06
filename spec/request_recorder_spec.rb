@@ -141,6 +141,12 @@ describe RequestRecorder do
       body.should_not include("yyy")
     end
 
+    it "returns custom auth failure response" do
+      status, headers, body = middleware.call("PATH_INFO" => "/request_recorder/xxx", "success" => [422, {}, "Barfoo"])
+      status.should == 422
+      body.should include("Barfoo")
+    end
+
     it "cannot view a missing log" do
       status, headers, body = middleware.call("PATH_INFO" => "/request_recorder/missing-key", "success" => true)
       status.should == 404
@@ -177,6 +183,11 @@ describe RequestRecorder do
 
       it "does not log without frontend_auth" do
         status, headers, body = middleware.call("QUERY_STRING" => "request_recorder=10-xxx")
+        headers["X-ChromeLogger-Data"].should == nil
+      end
+
+      it "does not log with array response from frontend_auth" do
+        status, headers, body = middleware.call("QUERY_STRING" => "request_recorder=10-xxx", "success" => [302, {}, "asdas"])
         headers["X-ChromeLogger-Data"].should == nil
       end
     end

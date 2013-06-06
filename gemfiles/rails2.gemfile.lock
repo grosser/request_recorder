@@ -1,7 +1,7 @@
 PATH
   remote: /Users/mgrosser/code/tools/request_recorder
   specs:
-    request_recorder (0.2.4)
+    request_recorder (0.3.0)
       activerecord
       logcast (>= 0.1.4)
       multi_json
@@ -22,7 +22,7 @@ GEM
       redis (~> 3.0.0)
     json (1.7.7)
     logcast (0.1.4)
-    multi_json (1.7.2)
+    multi_json (1.7.3)
     rack (1.1.6)
     rake (10.0.4)
     redis (3.0.3)

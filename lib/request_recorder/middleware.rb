@@ -48,7 +48,9 @@ module RequestRecorder
           raise result # Do not mess up the apps normal exception behavior
         else
           path = [env["PATH_INFO"], env["QUERY_STRING"]].compact.join("?")
-          extra_headers = chrome_logger_headers(log, path) if @auth && @auth.call(env)
+          if @auth && auth = @auth.call(env)
+            extra_headers = chrome_logger_headers(log, path) unless auth.is_a?(Array)
+          end
           response_with_data_in_cookie(result, steps_left, id, extra_headers)
         end
       end
@@ -58,11 +60,15 @@ module RequestRecorder
 
     def render_frontend(env, key)
       if @auth
-        if @auth.call(env)
-          if log = @store.read(key)
-            [200, {}, Frontend.render(log)]
+        if response = @auth.call(env)
+          if response.is_a?(Array)
+            response
           else
-            [404, {}, "Did not find a log for key #{key}"]
+            if log = @store.read(key)
+              [200, {}, Frontend.render(log)]
+            else
+              [404, {}, "Did not find a log for key #{key}"]
+            end
           end
         else
           [401, {}, "Unauthorized"]
