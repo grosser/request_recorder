@@ -7,14 +7,16 @@ Install
 
 Add to your middleware stack:
 
-    require "request_recorder"
+```Ruby
+require "request_recorder"
 
-    require "request_recorder/cache_logger"
-    use RequestRecorder::Middleware,
-      :store => RequestRecorder::CacheLogger.new(Rails.cache),
-      :frontend_auth => lambda { |env| Rails.env.development? } # TODO use something like `env.warden.user.is_admin?` in production, or return a [status, headers, body] array for custom failure message
-      # if you get 502's because of too large headers, you can reduce them: everything in :remove will be removed when above :max
-      # :headers => {:max => 10_000, :remove => [/Identity Map/, /Cache local read/, /Cache read/, /SELECT count(\*)/, /SELECT \* FROM/] }
+require "request_recorder/cache_logger"
+use RequestRecorder::Middleware,
+  :store => RequestRecorder::CacheLogger.new(Rails.cache),
+  :frontend_auth => lambda { |env| Rails.env.development? } # TODO use something like `env.warden.user.is_admin?` in production, or return a [status, headers, body] array for custom failure message
+  # if you get 502's because of too large headers, you can reduce them: everything in :remove will be removed when above :max
+  # :headers => {:max => 10_000, :remove => [/Identity Map/, /Cache local read/, /Cache read/, /SELECT count(\*)/, /SELECT \* FROM/] }
+```
 
 Usage
 =====
