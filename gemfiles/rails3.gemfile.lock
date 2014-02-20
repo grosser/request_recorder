@@ -1,7 +1,7 @@
 PATH
-  remote: /Users/mgrosser/code/tools/request_recorder
+  remote: ../
   specs:
-    request_recorder (0.3.1)
+    request_recorder (0.3.2)
       activerecord
       logcast (>= 0.1.4)
       multi_json
@@ -31,6 +31,7 @@ GEM
     fakeredis (0.4.2)
       redis (~> 3.0.0)
     i18n (0.6.1)
+    iconv (1.0.4)
     json (1.7.7)
     logcast (0.1.4)
     multi_json (1.7.2)
@@ -56,7 +57,9 @@ DEPENDENCIES
   appraisal
   bump
   fakeredis
+  iconv
   json
+  logcast (= 0.1.4)
   rack (>= 1.5.2)
   rake
   request_recorder!

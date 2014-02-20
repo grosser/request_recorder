@@ -1,6 +1,7 @@
 require "active_record"
 require "fakeredis"
 require "tempfile"
+require "active_support/all"
 
 ActiveRecord::Base.logger = ActiveSupport::BufferedLogger.new("/dev/null")
 

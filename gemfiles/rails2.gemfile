@@ -9,6 +9,8 @@ gem "rspec", "~>2"
 gem "sqlite3"
 gem "fakeredis"
 gem "json"
+gem "logcast", "0.1.4"
+gem "iconv"
 gem "rack", "~> 1.1.6"
 gem "activerecord", "~>2.3.14"
 
