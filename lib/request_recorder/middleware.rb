@@ -41,7 +41,7 @@ module RequestRecorder
         end
 
         steps_left, id = read_state_from_env(env)
-        return [500, {}, "#{MARKER} exceeded maximum value #{MAX_STEPS}"] if steps_left > MAX_STEPS
+        return [500, {}, ["#{MARKER} exceeded maximum value #{MAX_STEPS}"]] if steps_left > MAX_STEPS
         id = persist_log(id, log)
 
         if result.is_a?(Exception)
@@ -65,16 +65,16 @@ module RequestRecorder
             response
           else
             if log = @store.read(key)
-              [200, {}, Frontend.render(log)]
+              [200, {}, [Frontend.render(log)]]
             else
-              [404, {}, "Did not find a log for key #{key}"]
+              [404, {}, ["Did not find a log for key #{key}"]]
             end
           end
         else
-          [401, {}, "Unauthorized"]
+          [401, {}, ["Unauthorized"]]
         end
       else
-        [500, {}, "you need to provide #{AUTH.inspect} option"]
+        [500, {}, ["you need to provide #{AUTH.inspect} option"]]
       end
     end
 

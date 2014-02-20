@@ -57,7 +57,7 @@ describe RequestRecorder do
   it "blows up if you go over the maximum" do
     status, headers, body = middleware.call("QUERY_STRING" => "request_recorder=99999")
     status.should == 500
-    body.should include "maximum"
+    body.to_s.should include "maximum"
   end
 
   context "subsequent requests" do
@@ -139,7 +139,7 @@ describe RequestRecorder do
     it "can view a log" do
       status, headers, body = middleware.call("PATH_INFO" => "/request_recorder/xxx", "success" => true)
       status.should == 200
-      body.should include("yyy")
+      body.to_s.should include("yyy")
     end
 
     it "cannot view a log if auth fails" do
@@ -151,20 +151,20 @@ describe RequestRecorder do
     it "returns custom auth failure response" do
       status, headers, body = middleware.call("PATH_INFO" => "/request_recorder/xxx", "success" => [422, {}, "Barfoo"])
       status.should == 422
-      body.should include("Barfoo")
+      body.to_s.should include("Barfoo")
     end
 
     it "cannot view a missing log" do
       status, headers, body = middleware.call("PATH_INFO" => "/request_recorder/missing-key", "success" => true)
       status.should == 404
-      body.should include("missing-key")
+      body.to_s.should include("missing-key")
     end
 
     it "warns about unconfigured :frontend_auth" do
       middleware = RequestRecorder::Middleware.new(inner_app, :store => store, :max_header_size => 1000)
       status, headers, body = middleware.call("PATH_INFO" => "/request_recorder/xxx")
       status.should == 500
-      body.should include(":frontend_auth")
+      body.to_s.should include(":frontend_auth")
     end
 
     context "chrome logger" do
