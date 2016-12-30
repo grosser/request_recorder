@@ -31,13 +31,13 @@ Chrome console
 
  - Install [Chrome extension](https://chrome.google.com/webstore/detail/chrome-logger/noaneddfkdjfnfdakjjmocngnfkfehhd) by [Craig Campbell](http://craig.is)
  - Enable it<br/> ![Enable](http://cdn.craig.is/img/chromelogger/toggle.gif)
- - Open console<br/> ![Profit](https://dl.dropboxusercontent.com/u/2670385/Web/request_recorder_output.png)
+ - Open console<br/> ![Profit](assets/output.png?raw=true)
 
 Web-frontend
 ========
 (needs `:frontend_auth`)
 
-![Frontend](https://dl.dropboxusercontent.com/u/2670385/Web/request_recorder_frontend.png)
+![Frontend](assets/frontend.png?raw=true)
 
 See the log of **all** requests in the session: `/request_recorder/my_session_name`.
 This also includes requests that did not get shown in the chrome logger like redirects.
